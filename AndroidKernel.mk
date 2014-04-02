@@ -10,7 +10,7 @@ endif
 
 KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
 KERNEL_CONFIG := $(KERNEL_OUT)/.config
-TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/arm/boot/zImage
+TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/arm/boot/zImage-dtb
 KERNEL_HEADERS_INSTALL := $(KERNEL_OUT)/usr
 KERNEL_MODULES_INSTALL := system
 KERNEL_MODULES_OUT := $(TARGET_OUT)/lib/modules
@@ -62,6 +62,27 @@ if [ "$$mdpath" != "" ];then\
 mpath=`dirname $$mdpath`; rm -rf $$mpath;\
 fi
 endef
+
+ifeq ($(KERNEL_USES_DTB),y)
+DTS_NAME ?= $(MSM_ARCH)
+DTS_FILES = $(wildcard $(TOP)/kernel/lge/hammerhead/arch/arm/boot/dts/$(DTS_NAME)*.dts)
+DTS_FILE = $(lastword $(subst /, ,$(1)))
+DTB_FILE = $(addprefix $(KERNEL_OUT)/arch/arm/boot/,$(patsubst %.dts,%.dtb,$(call DTS_FILE,$(1))))
+ZIMG_FILE = $(addprefix $(KERNEL_OUT)/arch/arm/boot/,$(patsubst %.dts,%-zImage-dtb,$(call DTS_FILE,$(1))))
+KERNEL_ZIMG = $(KERNEL_OUT)/arch/arm/boot/zImage-dtb
+DTC = $(KERNEL_OUT)/scripts/dtc/dtc
+
+define append-dtb
+mkdir -p $(KERNEL_OUT)/arch/arm/boot;\
+$(foreach d, $(DTS_FILES), \
+   $(DTC) -p 1024 -O dtb -o $(call DTB_FILE,$(d)) $(d); \
+   cat $(KERNEL_ZIMG) $(call DTB_FILE,$(d)) > $(call ZIMG_FILE,$(d));)
+endef
+else
+
+define append-dtb
+endef
+endif
 
 $(KERNEL_OUT):
 	mkdir -p $(KERNEL_OUT)
