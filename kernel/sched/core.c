@@ -4932,7 +4932,7 @@ void show_state_filter(unsigned long state_filter)
 
 	touch_all_softlockup_watchdogs();
 
-#ifdef CONFIG_SCHED_DEBUG
+#ifdef CONFIG_SYSRQ_SCHED_DEBUG
 	sysrq_sched_debug_show();
 #endif
 	rcu_read_unlock();
@@ -5216,9 +5216,6 @@ static void migrate_tasks(unsigned int dead_cpu)
 	 * done here.
 	 */
 	rq->stop = NULL;
-
-	/* Ensure any throttled groups are reachable by pick_next_task */
-	unthrottle_offline_cfs_rqs(rq);
 
 	for ( ; ; ) {
 		/*
